@@ -26,18 +26,23 @@
 
 #include <SPI.h>
 #include "epd2in9b.h"
-#include "imagedata.h"
+#include "imagedata-29.h"
 #include "epdpaint.h"
 
 #define COLORED     0
 #define UNCOLORED   1
 
+extern const unsigned char IMAGE_BLACK[];
+extern const unsigned char IMAGE_RED[];
+
+unsigned char image[1024];
+
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
-  Epd epd;
+  Epd epd(SPI, A2, A1, A0, A4);
 
-  if (epd.Init() != 0) {
+  if (!epd.Init()) {
     Serial.print("e-Paper init failed");
     return;
   }
@@ -51,16 +56,16 @@ void setup() {
     * update a partial display several times.
     * 1 byte = 8 pixels, therefore you have to set 8*N pixels at a time.
     */
-  unsigned char image[1024];
   Paint paint(image, 128, 18);    //width should be the multiple of 8 
 
   paint.Clear(UNCOLORED);
   paint.DrawStringAt(0, 0, "e-Paper Demo", &Font12, COLORED);
   epd.SetPartialWindowBlack(paint.GetImage(), 24, 32, paint.GetWidth(), paint.GetHeight());
-
+Serial.print("e-Paper Demo");
   paint.Clear(COLORED);
   paint.DrawStringAt(2, 2, "Hello world", &Font16, UNCOLORED);
   epd.SetPartialWindowRed(paint.GetImage(), 0, 64, paint.GetWidth(), paint.GetHeight());
+Serial.print("Hello World");
   
   paint.SetWidth(64);
   paint.SetHeight(64);
@@ -70,24 +75,33 @@ void setup() {
   paint.DrawLine(0, 0, 40, 50, COLORED);
   paint.DrawLine(40, 0, 0, 50, COLORED);
   epd.SetPartialWindowBlack(paint.GetImage(), 8, 120, paint.GetWidth(), paint.GetHeight());
+Serial.print("Rectangle");
   
   paint.Clear(UNCOLORED);
   paint.DrawCircle(32, 32, 30, COLORED);
   epd.SetPartialWindowBlack(paint.GetImage(), 64, 120, paint.GetWidth(), paint.GetHeight());
+Serial.print("Circle");
 
   paint.Clear(UNCOLORED);
   paint.DrawFilledRectangle(0, 0, 40, 50, COLORED);
   epd.SetPartialWindowRed(paint.GetImage(), 8, 200, paint.GetWidth(), paint.GetHeight());
+Serial.print("Filled Rectangle");
 
   paint.Clear(UNCOLORED);
   paint.DrawFilledCircle(32, 32, 30, COLORED);
   epd.SetPartialWindowRed(paint.GetImage(), 64, 200, paint.GetWidth(), paint.GetHeight());
+Serial.print("Filled Circle");
 
   /* This displays the data from the SRAM in e-Paper module */
   epd.DisplayFrame();
 
+Serial.println("Ready");
+Serial.print("Press Key");
+while(Serial.read() < 0) Particle.process();
+
   /* This displays an image */
   epd.DisplayFrame(IMAGE_BLACK, IMAGE_RED);
+Serial.println("Ready");
 
   /* Deep sleep */
   epd.Sleep();

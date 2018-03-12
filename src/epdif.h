@@ -3,6 +3,7 @@
  *  @brief      :   Header file of epdif.cpp providing EPD interface functions
  *                  Users have to implement all the functions in epdif.cpp
  *  @author     :   Yehui from Waveshare
+ *  @enhancement:	For particle.io by ScruffR (September 23 2017)
  *
  *  Copyright (C) Waveshare     August 10 2017
  *
@@ -28,24 +29,47 @@
 #ifndef EPDIF_H
 #define EPDIF_H
 
-#include <arduino.h>
+#include <Arduino.h>
+#include <SPI.h>
 
 // Pin definition
-#define RST_PIN         8
-#define DC_PIN          9
-#define CS_PIN          10
-#define BUSY_PIN        7
+//#define RST_PIN         8
+//#define DC_PIN          9
+//#define CS_PIN          10
+//#define BUSY_PIN        7
+
+#if defined(PARTICLE)
+#define yield() Particle.process()
+#else
+#define yield() ;
+#endif
 
 class EpdIf {
 public:
-    EpdIf(void);
-    ~EpdIf(void);
+  EpdIf(void)
+    : _SPI(SPI), _CS(10), _DC(9), _RST(8), _BUSY(7), _init(false)
+  {}
+  EpdIf(SPIClass& hwSPI, int16_t pinCS, int16_t pinDC, int16_t pinReset, int16_t pinBusy)
+    : _SPI(hwSPI), _CS(pinCS), _DC(pinDC), _RST(pinReset), _BUSY(pinBusy), _init(false)
+  {}
 
-    static int  IfInit(void);
-    static void DigitalWrite(int pin, int value); 
-    static int  DigitalRead(int pin);
-    static void DelayMs(unsigned int delaytime);
-    static void SpiTransfer(unsigned char data);
+  ~EpdIf(void)
+  {}
+
+  bool    IfInit(void);
+  int16_t DigitalRead(int16_t pin);
+  void    DigitalWrite(int16_t pin, int16_t value);
+  void    DelayMs(uint16_t delaytime);
+  void    SpiTransfer(unsigned char data, int16_t len = 1);
+  void    SpiTransfer(const unsigned char *data, int16_t len);
+
+protected:
+  SPIClass& _SPI;
+  int16_t   _CS;
+  int16_t   _DC;
+  int16_t   _RST;
+  int16_t   _BUSY;
+  bool      _init;
 };
 
 #endif

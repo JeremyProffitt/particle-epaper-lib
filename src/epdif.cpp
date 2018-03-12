@@ -3,6 +3,7 @@
  *  @brief      :   Implements EPD interface functions
  *                  Users have to implement all the functions in epdif.cpp
  *  @author     :   Yehui from Waveshare
+ *  @enhancement:	  For particle.io by ScruffR (September 23 2017)
  *
  *  Copyright (C) Waveshare     August 10 2017
  *
@@ -26,39 +27,57 @@
  */
 
 #include "epdif.h"
-#include <spi.h>
 
-EpdIf::EpdIf() {
-};
-
-EpdIf::~EpdIf() {
-};
-
-void EpdIf::DigitalWrite(int pin, int value) {
-    digitalWrite(pin, value);
+bool EpdIf::IfInit(void) {
+  pinMode(_CS, OUTPUT);
+  pinMode(_RST, OUTPUT);
+  pinMode(_DC, OUTPUT);
+  pinMode(_BUSY, INPUT);
+  _SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
+  _SPI.begin();
+  return (_init = true);
 }
 
-int EpdIf::DigitalRead(int pin) {
-    return digitalRead(pin);
+int16_t EpdIf::DigitalRead(int16_t pin) 
+{
+#if defined(PARTICLE) && (SYSTEM_VERSION >= 0x00040400)  
+  if (!_init) IfInit();
+  return pinReadFast(pin);
+#else
+  return digitalRead(pin);
+#endif
 }
 
-void EpdIf::DelayMs(unsigned int delaytime) {
-    delay(delaytime);
+void EpdIf::DigitalWrite(int16_t pin, int16_t value)
+{
+#if defined(PARTICLE) && (SYSTEM_VERSION >= 0x00040400)
+  if (!_init) IfInit();
+  digitalWriteFast(pin, value);
+#else
+  digitalWrite(pin, value);
+#endif
 }
 
-void EpdIf::SpiTransfer(unsigned char data) {
-    digitalWrite(CS_PIN, LOW);
-    SPI.transfer(data);
-    digitalWrite(CS_PIN, HIGH);
+void EpdIf::DelayMs(uint16_t delaytime)
+{
+#if defined(PARTICLE)
+  for (uint32_t _ms = millis(); millis() - _ms < delaytime; Particle.process());
+#else
+  delay(delaytime);
+#endif
 }
 
-int EpdIf::IfInit(void) {
-    pinMode(CS_PIN, OUTPUT);
-    pinMode(RST_PIN, OUTPUT);
-    pinMode(DC_PIN, OUTPUT);
-    pinMode(BUSY_PIN, INPUT); 
-    SPI.beginTransaction(SPISettings(2000000, MSBFIRST, SPI_MODE0));
-    SPI.begin();
-    return 0;
+void EpdIf::SpiTransfer(unsigned char data, int16_t len)
+{
+  digitalWrite(_CS, LOW);
+  for(int16_t i=0; i < len; i++)
+    _SPI.transfer(data);
+  digitalWrite(_CS, HIGH);
+}
+
+void EpdIf::SpiTransfer(const unsigned char *data, int16_t len) {
+  digitalWrite(_CS, LOW);
+  _SPI.transfer((void*)data, NULL, len, NULL);
+  digitalWrite(_CS, HIGH);
 }
 

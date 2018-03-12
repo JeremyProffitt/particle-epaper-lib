@@ -2,7 +2,7 @@
  *  @filename   :   epdpaint.h
  *  @brief      :   Header file for epdpaint.cpp
  *  @author     :   Yehui from Waveshare
- *  
+ *
  *  Copyright (C) Waveshare     July 28 2017
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -27,46 +27,51 @@
 #ifndef EPDPAINT_H
 #define EPDPAINT_H
 
-// Display orientation
-#define ROTATE_0            0
-#define ROTATE_90           1
-#define ROTATE_180          2
-#define ROTATE_270          3
+#include <Arduino.h>
 
-// Color inverse. 1 or 0 = set or reset a bit if set a colored pixel
-#define IF_INVERT_COLOR     1
+// Display orientation (as set in epd2in9b.h for PANEL_SETTINGs)
+enum ORIENTATION {
+  PORTRAIT          = 0b1100,
+  LANDSCAPE         = 0b0100,
+  PORTRAIT_FLIPPED  = 0b1000,
+  LANDSCAPE_FLIPPED = 0b0000,
+};
 
 #include "fonts.h"
 
 class Paint {
 public:
-    Paint(unsigned char* image, int width, int height);
-    ~Paint();
-    void Clear(int colored);
-    int  GetWidth(void);
-    void SetWidth(int width);
-    int  GetHeight(void);
-    void SetHeight(int height);
-    int  GetRotate(void);
-    void SetRotate(int rotate);
-    unsigned char* GetImage(void);
-    void DrawAbsolutePixel(int x, int y, int colored);
-    void DrawPixel(int x, int y, int colored);
-    void DrawCharAt(int x, int y, char ascii_char, sFONT* font, int colored);
-    void DrawStringAt(int x, int y, const char* text, sFONT* font, int colored);
-    void DrawLine(int x0, int y0, int x1, int y1, int colored);
-    void DrawHorizontalLine(int x, int y, int width, int colored);
-    void DrawVerticalLine(int x, int y, int height, int colored);
-    void DrawRectangle(int x0, int y0, int x1, int y1, int colored);
-    void DrawFilledRectangle(int x0, int y0, int x1, int y1, int colored);
-    void DrawCircle(int x, int y, int radius, int colored);
-    void DrawFilledCircle(int x, int y, int radius, int colored);
-
+  Paint(unsigned char* image, int16_t screenWidth, int16_t screenHeight, ORIENTATION orient = PORTRAIT, bool inverted = false);
+  ~Paint();
+  void Clear(int16_t colored);
+  int16_t  GetWidth(void);
+  //void SetWidth(int16_t width);
+  int16_t  GetHeight(void);
+  //void SetHeight(int16_t height);
+  ORIENTATION GetRotate(void);
+  void SetRotate(ORIENTATION orientation);
+  bool isInverse(void);
+  bool isInverse(bool invert);
+  unsigned char* GetImage(void);
+  void TransformXY(int16_t* x, int16_t* y);
+  void DrawAbsolutePixel(int16_t x, int16_t y, int16_t colored);
+  void DrawPixel(int16_t x, int16_t y, int16_t colored);
+  void DrawCharAt(int16_t x, int16_t y, char ascii_char, const sFONT* font, int16_t colored);
+  void DrawStringAt(int16_t x, int16_t y, const char* text, const sFONT* font, int16_t colored);
+  void DrawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t colored);
+  void DrawHorizontalLine(int16_t x, int16_t y, int16_t width, int16_t colored);
+  void DrawVerticalLine(int16_t x, int16_t y, int16_t height, int16_t colored);
+  void DrawRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t colored);
+  void DrawFilledRectangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t colored);
+  void DrawCircle(int16_t x, int16_t y, int16_t radius, int16_t colored);
+  void DrawFilledCircle(int16_t x, int16_t y, int16_t radius, int16_t colored);
+ 
 private:
-    unsigned char* image;
-    int width;
-    int height;
-    int rotate;
+  unsigned char* image;
+  int16_t        width;
+  int16_t        height;
+  ORIENTATION    orientation;
+  bool           inverse;
 };
 
 #endif
